@@ -637,6 +637,20 @@ PS4["14.00"] = Object.assign({}, PS4["13.52"], {
   k_rootvnode: undefined,
 });
 
+// 14.02 -- UNTESTED. WebKit assumed identical to 14.00 (which is itself
+// declared identical to 13.52); the kernel stage is afterglow's, and the
+// offsets it uses are the 14.00 ones, which are NOT verified for 14.02.
+// Everything below 14.00 that the kernel side would need is undefined, so
+// the legacy stage cannot be reached by accident.
+PS4["14.02"] = Object.assign({}, PS4["14.00"], {
+  alias_of: "14.00-webkit",
+  fw_status:
+    "state=14.02-UNTESTED " +
+    "webkit=assumed-identical-to-14.00 (inherited) " +
+    "kernel=afterglow-14.00-offsets (NOT verified for 14.02) " +
+    "payload=hen.bin|goldhen.bin",
+});
+
 export function offsetsFor(uaString) {
   const m = (uaString || "").match(/PlayStation\s+4[\/ ](\d+)\.(\d+)/);
   if (!m) return { key: null, off: null };
