@@ -1736,10 +1736,10 @@ async function attempt(ctx, opts) {
          when the pointer is below the anchor the unsigned form turns the
          negative into a huge unaligned integer and the vote then reports a
          base off the 16 KiB grid. */
-      const mark = K.anchor % 0x4000, tally = {};
+      const tally = {};
       for (let off = 0; off <= TUNE.window - 8; off += 8) {
         const a = at(off);
-        if (a.hi !== 0xffffffff || a.low === 0xffffffff || a.low % 0x4000 !== mark) continue;
+        if (a.hi !== 0xffffffff || a.low === 0xffffffff) continue;
         const diff = (a.low - K.anchor) | 0;
         if (diff % 0x4000 !== 0) continue;
         const key = (diff / 0x4000) | 0;
