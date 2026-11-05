@@ -1732,21 +1732,26 @@ async function attempt(ctx, opts) {
        which is the likeliest way this step takes the console with it. */
     let voted = null;
     {
+      /* The tally key has to be a signed 32 bit difference, not `>>> 0`:
+         when the pointer is below the anchor the unsigned form turns the
+         negative into a huge unaligned integer and the vote then reports a
+         base off the 16 KiB grid. */
       const mark = K.anchor % 0x4000, tally = {};
       for (let off = 0; off <= TUNE.window - 8; off += 8) {
         const a = at(off);
-        if (a.hi === 0xffffffff && a.low !== 0xffffffff && a.low % 0x4000 === mark) {
-          const b = (a.low - K.anchor) >>> 0;
-          if (b % 0x4000 === 0) tally[b] = (tally[b] || 0) + 1;
-        }
+        if (a.hi !== 0xffffffff || a.low === 0xffffffff || a.low % 0x4000 !== mark) continue;
+        const diff = (a.low - K.anchor) | 0;
+        if (diff % 0x4000 !== 0) continue;
+        const key = (diff / 0x4000) | 0;
+        tally[key] = (tally[key] || 0) + 1;
       }
       let best = null, top = 0, second = 0;
-      for (const b in tally) {
-        const n = tally[b];
-        if (n > top) { second = top; best = Number(b); top = n; }
+      for (const key in tally) {
+        const n = tally[key];
+        if (n > top) { second = top; best = Number(key); top = n; }
         else if (n > second) second = n;
       }
-      if (best !== null && top > second) voted = v(best + K.anchor, 0xffffffff);
+      if (best !== null && top > second) voted = v((best * 0x4000 + K.anchor) >>> 0, 0xffffffff);
     }
 
     if (found && voted && !same(found, voted)) {
