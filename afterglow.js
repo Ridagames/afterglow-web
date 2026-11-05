@@ -56,6 +56,14 @@ const FIRMWARE = {
     padding:   0x0b39d98,   /* start of the zero run behind kernel text */
     ghKmem:    0x0466540,
   },
+  "14.02": {
+    anchor:    0x00e6c60,   /* same function, same place */
+    swap_rbp:  0x0a81238,   /* 14.00 + 0x2d0 */
+    prison0:   0x111fa18,   /* same, decoded from the same instruction */
+    rootvnode: 0x2136e90,
+    padding:   0x0b3a058,   /* 14.00 + 0x2c0 */
+    ghKmem:    0x04667f0,   /* 14.00 + 0x2b0 */
+  },
   "13.52": {
     anchor:    0x00e6c60,   /* same function, same place */
     swap_rbp:  0x0a80c98,   /* 4e 95 c3, the only match in text */
@@ -117,13 +125,19 @@ const BOOTSTRAP_TABLE = {
     + "0f22c0c781900400000000000066c781b5040000eb0066c781b9040000eb00c6"
     + "81c2040000eb66c781b40a0000ff26488d91b40a0000c781802d100102000000"
     + "488991882d1001c781ac2d100101000000c681daaa1f0037c681ddaa1f00370f"
-    + "20c0480d000001000f22c031c0c3",
+    + "20c0480d000001000f22c0c031c0c3",
+  "14.02":
+      "b9820000c00f3248c1e22089c04809c2488d8a40feffff0f20c04825fffffeff"
+    + "0f22c0c781900400000000000066c781b5040000eb0066c781b9040000eb00c6"
+    + "81c2040000eb66c781b40a0000ff26488d91b40a0000c781802d100102000000"
+    + "488991882d1001c781ac2d100101000000c681daaa1f0037c681ddaa1f00370f"
+    + "20c0480d000001000f22c0c031c0c3",
   "13.52":
       "b9820000c00f3248c1e22089c04809c2488d8a40feffff0f20c04825fffffeff"
     + "0f22c0c781900400000000000066c781b5040000eb0066c781b9040000eb00c6"
     + "81c2040000eb66c781b40a0000ff26488d91b40a0000c781802d100102000000"
     + "488991882d1001c781ac2d100101000000c6813aa81f0037c6813da81f00370f"
-    + "20c0480d000001000f22c031c0c3",
+    + "20c0480d000001000f22c0c031c0c3",
 };
 
 let BOOTSTRAP = null;
@@ -162,6 +176,23 @@ const PATCH_TABLE = {
   [0x01b7ab8, "90e93c01", "dlsym, open it to every caller"],
   [0x0628684, "eb00",     "self verification"],
   [0x0628f6f, "eb00",     "delayed panic on suspend"],
+  ],
+  "14.02": [
+  [0x0000acd, "eb",       "bcopy"],
+  [0x02bd86d, "eb",       "bzero"],
+  [0x02bd8b1, "eb",       "pagezero"],
+  [0x02bd92d, "eb",       "memcpy"],
+  [0x02bd971, "eb",       "pagecopy"],
+  [0x02bdb1d, "eb",       "copyin"],
+  [0x02bdfcd, "eb",       "copyinstr"],
+  [0x02be09d, "eb",       "copystr"],
+  [0x01b7b13, "eb04",     "dlsym, first check"],
+  [0x01b7b23, "eb04",     "dlsym, second check"],
+  [0x01b7b43, "90e9",     "dlsym, nop and jump"],
+  [0x01b75d4, "90e9",     "load_prx"],
+  [0x01b7b88, "90e93c01", "dlsym, open it to every caller"],
+  [0x0628754, "eb00",     "self verification"],
+  [0x062903f, "eb00",     "delayed panic on suspend"],
   ],
   "13.52": [
   [0x0000acd, "eb",       "bcopy"],
