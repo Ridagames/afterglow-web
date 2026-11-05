@@ -1735,7 +1735,12 @@ async function attempt(ctx, opts) {
       /* The tally key has to be a signed 32 bit difference, not `>>> 0`:
          when the pointer is below the anchor the unsigned form turns the
          negative into a huge unaligned integer and the vote then reports a
-         base off the 16 KiB grid. */
+         base off the 16 KiB grid.
+
+         The winning pointer is stored as-is, not recomputed from the
+         quotient: `best * 0x4000 + K.anchor` loses the low bits whenever the
+         product overflows the signed 32 bit range, and the value that came
+         out then failed the grid check it was supposed to pass. */
       const tally = {};
       for (let off = 0; off <= TUNE.window - 8; off += 8) {
         const a = at(off);
@@ -1743,15 +1748,16 @@ async function attempt(ctx, opts) {
         const diff = (a.low - K.anchor) | 0;
         if (diff % 0x4000 !== 0) continue;
         const key = (diff / 0x4000) | 0;
-        tally[key] = (tally[key] || 0) + 1;
+        if (!tally[key]) tally[key] = { n: 0, low: a.low };
+        tally[key].n++;
       }
       let best = null, top = 0, second = 0;
       for (const key in tally) {
-        const n = tally[key];
-        if (n > top) { second = top; best = Number(key); top = n; }
+        const n = tally[key].n;
+        if (n > top) { second = top; best = key; top = n; }
         else if (n > second) second = n;
       }
-      if (best !== null && top > second) voted = v((best * 0x4000 + K.anchor) >>> 0, 0xffffffff);
+      if (best !== null && top > second) voted = v(tally[best].low, 0xffffffff);
     }
 
     if (found && voted && !same(found, voted)) {
